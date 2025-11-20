@@ -1,0 +1,269 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Model - All staff members
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String
+  password      String
+  phone         String?
+  role          String     @default("RECEPTIONIST")
+  specialty     String?    // For doctors
+  licenseNumber String?    // For doctors
+  yearsExp      Int?       // For doctors
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  appointments      Appointment[]
+  treatmentPlans    TreatmentPlan[]
+  consultationNotes ConsultationNote[]
+  messages          Message[]
+  tasks             Task[]
+  sessions          Session[]
+}
+
+// Patient Model
+model Patient {
+  id            String     @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String?    @unique
+  phone         String     @unique
+  dob           DateTime?
+  gender        String?
+  address       String?
+  medicalHistory String?
+  allergies     String?
+  insuranceProvider String?
+  insuranceNumber String?
+  emergyContactName String?
+  emergencyContactPhone String?
+  lastVisit     DateTime?
+  status        String @default("NEW")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  appointments      Appointment[]
+  treatmentPlans    TreatmentPlan[]
+  consultationNotes ConsultationNote[]
+  dentalChart       DentalChart?
+  prescriptions     Prescription[]
+  payments          Payment[]
+  documents         Document[]
+}
+
+// Appointment Model
+model Appointment {
+  id          String     @id @default(cuid())
+  patientId   String
+  doctorId    String
+  date        DateTime
+  time        String
+  type        String     // e.g., "Consultation", "Treatment", "Check-up"
+  status      String @default("SCHEDULED")
+  notes       String?
+  reasonVisit String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  User   @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+}
+
+// Dental Chart Model
+model DentalChart {
+  id        String     @id @default(cuid())
+  patientId String     @unique
+  chartData String     // JSON string of teeth conditions
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Treatment Plan Model
+model TreatmentPlan {
+  id          String     @id @default(cuid())
+  patientId   String
+  doctorId    String
+  diagnosis   String
+  procedures  String     // JSON array of procedures
+  totalCost   Float
+  sessions    Int
+  status      String @default("PENDING")
+  timeline    DateTime?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  User   @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+}
+
+// Consultation Notes Model
+model ConsultationNote {
+  id          String     @id @default(cuid())
+  patientId   String
+  doctorId    String
+  date        DateTime   @default(now())
+  diagnosis   String?
+  treatment   String?
+  notes       String?
+  attachments String?    // JSON array of attachment URLs
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  User   @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+}
+
+// Prescription Model
+model Prescription {
+  id          String     @id @default(cuid())
+  patientId   String
+  medication  String
+  dosage      String
+  instructions String?
+  issuedBy    String     // Doctor name or ID
+  date        DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Payment Model
+model Payment {
+  id          String     @id @default(cuid())
+  patientId   String
+  amount      Float
+  method      String
+  status      String @default("UNPAID")
+  invoiceNumber String?
+  date        DateTime   @default(now())
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Document Model (X-rays, lab results, etc)
+model Document {
+  id        String     @id @default(cuid())
+  patientId String
+  type      String     // "xray", "lab", "scan", etc
+  url       String
+  uploadedAt DateTime   @default(now())
+
+  // Relations
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Task Model
+model Task {
+  id          String     @id @default(cuid())
+  assignedTo  String
+  description String
+  patientId   String?
+  priority    String   @default("MEDIUM")
+  deadline    DateTime?
+  status      String @default("NOT_STARTED")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  user User @relation(fields: [assignedTo], references: [id], onDelete: Cascade)
+}
+
+// Messaging Model
+model Message {
+  id        String     @id @default(cuid())
+  senderId  String
+  receiverId String
+  content   String
+  attachments String?    // JSON array
+  read      Boolean    @default(false)
+  createdAt DateTime   @default(now())
+
+  // Relations
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+// Session Model for Auth
+model Session {
+  id        String     @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Enums - Note: SQLite doesn't support native enums, using strings instead
+// Role values: DOCTOR, RECEPTIONIST, PATIENT, DIRECTOR, ADMIN
+// AppointmentStatus: SCHEDULED, IN_PROGRESS, COMPLETED, CANCELED, NO_SHOW, RESCHEDULED
+// PatientStatus: NEW, RETURNING, ACTIVE, INACTIVE
+// TreatmentStatus: PENDING, ACTIVE, COMPLETED, CANCELED
+// TaskStatus: NOT_STARTED, IN_PROGRESS, COMPLETED, OVERDUE
+// Priority: LOW, MEDIUM, HIGH, URGENT
+// PaymentMethod: CASH, CARD, MOBILE_MONEY, INSURANCE, CHECK
+// PaymentStatus: PAID, UNPAID, PARTIAL, PENDING, OVERDUE
+// QueueStatus: WAITING, IN_CONSULTATION, COMPLETED
+
+// Inventory Model
+model Inventory {
+  id        String     @id @default(cuid())
+  itemName  String
+  quantity  Int
+  minLevel  Int
+  lastUpdate DateTime   @default(now())
+  createdAt DateTime   @default(now())
+}
+
+// Queue Model
+model Queue {
+  id        String     @id @default(cuid())
+  patientId String
+  status    String @default("WAITING")
+  arrival   DateTime   @default(now())
+  reason    String?
+  doctorId  String?
+  estimatedWait Int? // in minutes
+}
+
+// Notification Model
+model Notification {
+  id        String     @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean    @default(false)
+  createdAt DateTime   @default(now())
+}
+
+// Report Model
+model Report {
+  id        String     @id @default(cuid())
+  type      String     // "financial", "operational", "patient_analytics"
+  data      String     // JSON
+  createdBy String
+  date      DateTime   @default(now())
+}
