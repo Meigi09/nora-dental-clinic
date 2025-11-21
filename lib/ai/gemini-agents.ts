@@ -1,6 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export interface AIAgentTask {
   type:
@@ -23,8 +23,6 @@ export async function appointmentSchedulingAgent(
   context: Record<string, any>
 ): Promise<AIAgentResponse> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
     const prompt = `You are a dental clinic appointment scheduling assistant.
     
 Given the following context:
@@ -45,9 +43,11 @@ Recommend:
 
 Respond in JSON format with keys: recommendedSlot, preparations, duration, followUpNeeded`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const text = result.text || "";
 
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -75,8 +75,6 @@ export async function diagnosisAssistanceAgent(
   context: Record<string, any>
 ): Promise<AIAgentResponse> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
     const prompt = `You are a dental diagnosis assistant AI (INFORMATIONAL ONLY - NOT A REPLACEMENT FOR PROFESSIONAL DIAGNOSIS).
     
 Given the following clinical observations:
@@ -96,9 +94,11 @@ Provide:
 IMPORTANT: This is for the dentist to review. Always recommend professional consultation.
 Respond in JSON format.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const text = result.text || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -125,8 +125,6 @@ export async function billingAgent(
   context: Record<string, any>
 ): Promise<AIAgentResponse> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
     const prompt = `You are a dental clinic billing assistant.
     
 Generate an invoice summary for:
@@ -145,9 +143,11 @@ Provide:
 
 Respond in JSON format with keys: itemization, totalDue, paymentOptions, insuranceInfo, reminder`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const text = result.text || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -174,8 +174,6 @@ export async function analyticsAgent(
   context: Record<string, any>
 ): Promise<AIAgentResponse> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
     const prompt = `You are a dental clinic analytics advisor.
     
 Analyze the following clinic data:
@@ -196,9 +194,11 @@ Provide:
 
 Respond in JSON format.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const text = result.text || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -225,8 +225,6 @@ export async function queueManagementAgent(
   context: Record<string, any>
 ): Promise<AIAgentResponse> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
     const prompt = `You are a dental clinic queue management assistant.
     
 Current queue status:
@@ -246,9 +244,11 @@ Recommend:
 
 Respond in JSON format.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const text = result.text || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
