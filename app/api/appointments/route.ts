@@ -116,7 +116,7 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: \"Appointment ID is required\" },
+        { error: "Appointment ID is required" },
         { status: 400 }
       );
     }
@@ -149,11 +149,11 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get(\"id\");
+    const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(
-        { error: \"Appointment ID is required\" },
+        { error: "Appointment ID is required" },
         { status: 400 }
       );
     }

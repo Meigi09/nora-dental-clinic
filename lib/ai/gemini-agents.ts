@@ -1,6 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export interface AIAgentTask {
   type:
@@ -30,7 +30,11 @@ Given the following context:
 - Patient name: ${context.patientName}
 - Patient medical history: ${context.medicalHistory || "None"}
 - Requested appointment type: ${context.appointmentType}
-- Preferred dates: ${context.preferredDates?.join(", ")}
+- Preferred dates: ${
+      Array.isArray(context.preferredDates)
+        ? context.preferredDates.join(", ")
+        : "None"
+    }
 - Current appointments in system: ${JSON.stringify(
       context.existingAppointments
     )}
@@ -43,11 +47,9 @@ Recommend:
 
 Respond in JSON format with keys: recommendedSlot, preparations, duration, followUpNeeded`;
 
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    const text = result.text || "";
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response?.text() || "";
 
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -94,11 +96,9 @@ Provide:
 IMPORTANT: This is for the dentist to review. Always recommend professional consultation.
 Respond in JSON format.`;
 
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    const text = result.text || "";
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response?.text() || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -122,14 +122,16 @@ Respond in JSON format.`;
 
 // AI Agent for Billing & Invoicing
 export async function billingAgent(
-  context: Record<string, any>
+  context: Record<string, unknown>
 ): Promise<AIAgentResponse> {
   try {
     const prompt = `You are a dental clinic billing assistant.
     
 Generate an invoice summary for:
 - Patient: ${context.patientName}
-- Procedures: ${context.procedures?.join(", ")}
+- Procedures: ${
+      Array.isArray(context.procedures) ? context.procedures.join(", ") : "None"
+    }
 - Costs: ${JSON.stringify(context.costs)}
 - Insurance coverage: ${context.insuranceCoverage || "None"}
 - Patient balance history: ${context.balanceHistory || "None"}
@@ -143,11 +145,9 @@ Provide:
 
 Respond in JSON format with keys: itemization, totalDue, paymentOptions, insuranceInfo, reminder`;
 
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    const text = result.text || "";
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response?.text() || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -171,7 +171,7 @@ Respond in JSON format with keys: itemization, totalDue, paymentOptions, insuran
 
 // AI Agent for Analytics
 export async function analyticsAgent(
-  context: Record<string, any>
+  context: Record<string, unknown>
 ): Promise<AIAgentResponse> {
   try {
     const prompt = `You are a dental clinic analytics advisor.
@@ -181,9 +181,15 @@ Analyze the following clinic data:
 - Completed appointments: ${context.completedAppointments}
 - No-show rate: ${context.noShowRate}%
 - Revenue: ${context.revenue}
-- Top procedures: ${context.topProcedures?.join(", ")}
+- Top procedures: ${
+      Array.isArray(context.topProcedures)
+        ? context.topProcedures.join(", ")
+        : "None"
+    }
 - Doctor performance: ${JSON.stringify(context.doctorPerformance)}
-- Peak hours: ${context.peakHours?.join(", ")}
+- Peak hours: ${
+      Array.isArray(context.peakHours) ? context.peakHours.join(", ") : "None"
+    }
 
 Provide:
 1. Key insights and trends
@@ -194,11 +200,9 @@ Provide:
 
 Respond in JSON format.`;
 
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    const text = result.text || "";
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response?.text() || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -222,7 +226,7 @@ Respond in JSON format.`;
 
 // AI Agent for Queue Management
 export async function queueManagementAgent(
-  context: Record<string, any>
+  context: Record<string, unknown>
 ): Promise<AIAgentResponse> {
   try {
     const prompt = `You are a dental clinic queue management assistant.
@@ -230,7 +234,11 @@ export async function queueManagementAgent(
 Current queue status:
 - Patients waiting: ${context.patientsWaiting}
 - Average wait time: ${context.avgWaitTime} minutes
-- Available doctors: ${context.availableDoctors?.join(", ")}
+- Available doctors: ${
+      Array.isArray(context.availableDoctors)
+        ? context.availableDoctors.join(", ")
+        : "None"
+    }
 - Doctor availability: ${JSON.stringify(context.doctorAvailability)}
 - Urgent cases: ${context.urgentCases}
 - Queue: ${JSON.stringify(context.queue)}
@@ -244,11 +252,9 @@ Recommend:
 
 Respond in JSON format.`;
 
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    const text = result.text || "";
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response?.text() || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
