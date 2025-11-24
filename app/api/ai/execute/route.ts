@@ -8,13 +8,13 @@ export async function POST(request: NextRequest) {
 
     if (!type || !context) {
       return NextResponse.json(
-        { error: "Missing task type or context" },
+        { error: "Please provide both task type and context for the AI agent" },
         { status: 400 }
       );
     }
 
     const task: AIAgentTask = {
-      type: type as any,
+      type,
       context,
     };
 
@@ -27,8 +27,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("AI agent error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to execute AI agent" },
+      { error: "Unable to process AI request. Please try again later." },
       { status: 500 }
     );
   }

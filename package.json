@@ -9,6 +9,9 @@
     "lint": "eslint",
     "seed": "npx tsx prisma/seed.ts"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@google/genai": "^1.30.0",
     "@google/generative-ai": "^0.3.1",

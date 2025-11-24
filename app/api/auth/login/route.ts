@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email and password required" },
+        { error: "Please enter your email and password" },
         { status: 400 }
       );
     }
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
+        { error: "Invalid email or password" },
         { status: 401 }
       );
     }
@@ -30,8 +30,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Login error:", error);
+
+    // Log detailed error for debugging
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Unable to login. Please try again later." },
       { status: 500 }
     );
   }

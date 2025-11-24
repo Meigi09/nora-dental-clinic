@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const doctorId = searchParams.get("doctorId");
     const status = searchParams.get("status");
 
-    let where: any = {};
+    let where: Record<string, string> = {};
     if (patientId) where.patientId = patientId;
     if (doctorId) where.doctorId = doctorId;
     if (status) where.status = status;
@@ -25,8 +25,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(plans);
   } catch (error) {
     console.error("Get treatment plans error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to fetch treatment plans" },
+      { error: "Unable to load treatment plans. Please try again later." },
       { status: 500 }
     );
   }
@@ -54,7 +57,10 @@ export async function POST(request: NextRequest) {
       totalCost === undefined
     ) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error:
+            "Please provide all required treatment plan information: patient, doctor, diagnosis, procedures, and cost",
+        },
         { status: 400 }
       );
     }
@@ -80,8 +86,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(plan, { status: 201 });
   } catch (error) {
     console.error("Create treatment plan error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to create treatment plan" },
+      { error: "Unable to create treatment plan. Please try again later." },
       { status: 500 }
     );
   }
@@ -94,7 +103,7 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "Treatment plan ID required" },
+        { error: "Treatment plan ID is required" },
         { status: 400 }
       );
     }
@@ -114,8 +123,40 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(plan);
   } catch (error) {
     console.error("Update treatment plan error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to update treatment plan" },
+      { error: "Unable to update treatment plan. Please try again later." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Treatment plan ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.treatmentPlan.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete treatment plan error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
+    return NextResponse.json(
+      { error: "Unable to delete treatment plan. Please try again later." },
       { status: 500 }
     );
   }

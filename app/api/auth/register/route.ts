@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  validateUserCredentials,
-  createSession,
-  hashPassword,
-} from "@/lib/auth";
+import { createSession, hashPassword } from "@/lib/auth";
 import prisma from "@/lib/db/prisma";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, role, phone, specialty, licenseNumber } =
-      body;
+    const { email, password, name, phone } = body;
 
     // Validate input
-    if (!email || !password || !name || !role) {
+    if (!email || !password || !name || !phone) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error:
+            "Please provide all required information: email, password, name, and phone",
+        },
         { status: 400 }
       );
     }
@@ -27,22 +25,24 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User already exists" },
+        {
+          error:
+            "This email is already registered. Please use a different email.",
+        },
         { status: 400 }
       );
     }
 
-    // Create user
+    // Only allow PATIENT role for public registration
+    // Clinic staff (DOCTOR, RECEPTIONIST, DIRECTOR) can only be registered by the director
     const hashedPassword = await hashPassword(password);
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
-        role,
+        role: "PATIENT",
         phone,
-        specialty,
-        licenseNumber,
       },
     });
 
@@ -60,8 +60,11 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Registration error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Unable to complete registration. Please try again later." },
       { status: 500 }
     );
   }

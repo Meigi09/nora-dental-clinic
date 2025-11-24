@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const patientId = searchParams.get("patientId");
     const status = searchParams.get("status");
 
-    let where: any = {};
+    let where: Record<string, string> = {};
     if (patientId) where.patientId = patientId;
     if (status) where.status = status;
 
@@ -24,8 +24,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(payments);
   } catch (error) {
     console.error("Get payments error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to fetch payments" },
+      { error: "Unable to load payments. Please try again later." },
       { status: 500 }
     );
   }
@@ -38,7 +41,10 @@ export async function POST(request: NextRequest) {
 
     if (!patientId || amount === undefined || !method) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error:
+            "Please provide payment details: patient, amount, and payment method",
+        },
         { status: 400 }
       );
     }
@@ -69,7 +75,7 @@ export async function POST(request: NextRequest) {
       data: {
         patientId,
         amount,
-        method: method as any,
+        method,
         status: status || "PAID",
         invoiceNumber: finalInvoiceNumber,
       },
@@ -87,8 +93,11 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Create payment error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to create payment" },
+      { error: "Unable to process payment. Please try again later." },
       { status: 500 }
     );
   }
@@ -101,14 +110,14 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "Payment ID required" },
+        { error: "Payment ID is required" },
         { status: 400 }
       );
     }
 
     const payment = await prisma.payment.update({
       where: { id },
-      data: { status: status as any },
+      data: { status },
       include: {
         patient: true,
       },

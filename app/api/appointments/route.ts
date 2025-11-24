@@ -10,14 +10,14 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
 
-    let where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (patientId) where.patientId = patientId;
     if (doctorId) where.doctorId = doctorId;
     if (dateFrom || dateTo) {
       where.date = {};
-      if (dateFrom) where.date.gte = new Date(dateFrom);
-      if (dateTo) where.date.lte = new Date(dateTo);
+      if (dateFrom) (where.date as Record<string, Date>).gte = new Date(dateFrom);
+      if (dateTo) (where.date as Record<string, Date>).lte = new Date(dateTo);
     }
 
     const appointments = await prisma.appointment.findMany({
@@ -32,8 +32,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(appointments);
   } catch (error) {
     console.error("Get appointments error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to fetch appointments" },
+      { error: "Unable to load appointments. Please try again later." },
       { status: 500 }
     );
   }
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     if (!patientId || !doctorId || !date || !time || !type) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Please provide all required appointment details: patient, doctor, date, time, and type" },
         { status: 400 }
       );
     }
@@ -96,8 +99,11 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Create appointment error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to create appointment" },
+      { error: "Unable to book the appointment. Please try again later." },
       { status: 500 }
     );
   }
@@ -110,7 +116,7 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "Appointment ID required" },
+        { error: \"Appointment ID is required\" },
         { status: 400 }
       );
     }
@@ -130,8 +136,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(appointment);
   } catch (error) {
     console.error("Update appointment error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to update appointment" },
+      { error: "Unable to update the appointment. Please try again later." },
       { status: 500 }
     );
   }
@@ -140,11 +149,11 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get("id");
+    const id = searchParams.get(\"id\");
 
     if (!id) {
       return NextResponse.json(
-        { error: "Appointment ID required" },
+        { error: \"Appointment ID is required\" },
         { status: 400 }
       );
     }
@@ -156,8 +165,11 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete appointment error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to delete appointment" },
+      { error: "Unable to delete the appointment. Please try again later." },
       { status: 500 }
     );
   }

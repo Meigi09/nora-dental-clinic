@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
       if (!patient) {
         return NextResponse.json(
-          { error: "Patient not found" },
+          { error: "Patient record not found" },
           { status: 404 }
         );
       }
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(patient);
     }
 
-    let where: any = {};
+    let where: Record<string, unknown> = {};
     if (search) {
       where = {
         OR: [
@@ -55,8 +55,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(patients);
   } catch (error) {
     console.error("Get patients error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to fetch patients" },
+      { error: "Unable to load patients. Please try again later." },
       { status: 500 }
     );
   }
@@ -81,7 +84,10 @@ export async function POST(request: NextRequest) {
 
     if (!firstName || !lastName || !phone) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error:
+            "Please provide patient's first name, last name, and phone number",
+        },
         { status: 400 }
       );
     }
@@ -104,16 +110,19 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(patient, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Create patient error:", error);
-    if (error.code === "P2002") {
+    if (error instanceof Object && "code" in error && error.code === "P2002") {
       return NextResponse.json(
-        { error: "Patient with this phone/email already exists" },
+        { error: "This phone number or email is already registered" },
         { status: 400 }
       );
     }
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to create patient" },
+      { error: "Unable to create patient record. Please try again later." },
       { status: 500 }
     );
   }
@@ -126,7 +135,7 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: "Patient ID required" },
+        { error: "Patient ID is required" },
         { status: 400 }
       );
     }
@@ -139,8 +148,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(patient);
   } catch (error) {
     console.error("Update patient error:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     return NextResponse.json(
-      { error: "Failed to update patient" },
+      { error: "Unable to update patient record. Please try again later." },
       { status: 500 }
     );
   }

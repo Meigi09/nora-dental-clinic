@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth";
+import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
+import { checkPasswordStrength } from "@/lib/password-strength";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -14,24 +16,29 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     phone: "",
-    role: "PATIENT",
-    specialty: "",
-    licenseNumber: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // Validate password strength
+    const passwordStrength = checkPasswordStrength(formData.password);
+    if (!passwordStrength.isValid) {
+      setError(
+        "Password is not strong enough. Please follow the requirements."
+      );
+      setLoading(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
@@ -48,9 +55,7 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
           phone: formData.phone,
-          role: formData.role,
-          specialty: formData.specialty || undefined,
-          licenseNumber: formData.licenseNumber || undefined,
+          role: "PATIENT",
         }),
       });
 
@@ -64,9 +69,7 @@ export default function RegisterPage() {
       setUser(data.user);
       setSessionId(data.sessionId);
 
-      router.push(
-        formData.role === "PATIENT" ? "/dashboard/patient" : "/dashboard/doctor"
-      );
+      router.push("/patient");
     } catch (err) {
       setError("An error occurred. Please try again.");
     } finally {
@@ -75,17 +78,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-blue-600 mb-2">🦷</h1>
           <h2 className="text-3xl font-bold text-gray-800">Create Account</h2>
+          <p className="text-sm text-gray-600 mt-2">Patient Registration</p>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
-              Full Name
+              Full Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -93,13 +97,14 @@ export default function RegisterPage() {
               value={formData.name}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              placeholder="John Doe"
               required
             />
           </div>
 
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
-              Email
+              Email <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -107,13 +112,14 @@ export default function RegisterPage() {
               value={formData.email}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              placeholder="your@email.com"
               required
             />
           </div>
 
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
-              Phone
+              Phone <span className="text-red-500">*</span>
             </label>
             <input
               type="tel"
@@ -121,57 +127,14 @@ export default function RegisterPage() {
               value={formData.phone}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              placeholder="+1 (555) 000-0000"
+              required
             />
           </div>
 
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
-              Role
-            </label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            >
-              <option value="PATIENT">Patient</option>
-              <option value="DOCTOR">Doctor</option>
-              <option value="RECEPTIONIST">Receptionist</option>
-            </select>
-          </div>
-
-          {formData.role === "DOCTOR" && (
-            <>
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Specialty
-                </label>
-                <input
-                  type="text"
-                  name="specialty"
-                  value={formData.specialty}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  License Number
-                </label>
-                <input
-                  type="text"
-                  name="licenseNumber"
-                  value={formData.licenseNumber}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Password
+              Password <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -179,13 +142,15 @@ export default function RegisterPage() {
               value={formData.password}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              placeholder="••••••••"
               required
             />
+            <PasswordStrengthMeter password={formData.password} showFeedback />
           </div>
 
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
-              Confirm Password
+              Confirm Password <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -193,6 +158,7 @@ export default function RegisterPage() {
               value={formData.confirmPassword}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              placeholder="••••••••"
               required
             />
           </div>

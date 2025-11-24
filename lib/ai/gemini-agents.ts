@@ -9,18 +9,18 @@ export interface AIAgentTask {
     | "billing"
     | "analytics"
     | "queue_management";
-  context: Record<string, any>;
+  context: Record<string, unknown>;
 }
 
 export interface AIAgentResponse {
   success: boolean;
-  result?: any;
+  result?: unknown;
   error?: string;
 }
 
 // AI Agent for Appointment Scheduling
 export async function appointmentSchedulingAgent(
-  context: Record<string, any>
+  context: Record<string, unknown>
 ): Promise<AIAgentResponse> {
   try {
     const prompt = `You are a dental clinic appointment scheduling assistant.
@@ -72,7 +72,7 @@ Respond in JSON format with keys: recommendedSlot, preparations, duration, follo
 
 // AI Agent for Diagnosis Assistance
 export async function diagnosisAssistanceAgent(
-  context: Record<string, any>
+  context: Record<string, unknown>
 ): Promise<AIAgentResponse> {
   try {
     const prompt = `You are a dental diagnosis assistant AI (INFORMATIONAL ONLY - NOT A REPLACEMENT FOR PROFESSIONAL DIAGNOSIS).
